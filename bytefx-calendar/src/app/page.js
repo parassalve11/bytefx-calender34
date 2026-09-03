@@ -60,12 +60,7 @@ export default function CalendarPage() {
             >
               <ChevronRight size={16} />
             </button>
-            <Segmented
-              options={viewOptions}
-              value={filters.view}
-              onChange={(view) => setFilters({ ...filters, view })}
-              className="ml-2 hidden sm:inline-flex"
-            />
+            
           </div>
         }
       />
