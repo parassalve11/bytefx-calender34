@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------
+   ByteFX colour tokens. Light is the default theme; the `dark`
+   class on <html> swaps the same token names to the dark palette.
+   --------------------------------------------------------------- */
+:root {
+  --bfx-app: #eef2f7;
+  --bfx-surface: #ffffff;
+  --bfx-subtle: #f4f7fa;
+  --bfx-raised: #f7f9fc;
+  --bfx-line: #e4e9f0;
+  --bfx-line-strong: #cdd7e2;
+  --bfx-ink: #0e1723;
+  --bfx-ink-2: #4d5d72;
+  --bfx-ink-3: #79879b;
+  --bfx-pos: #2e9e06;
+  --bfx-neg: #d92d20;
+  --bfx-brand-soft: #1357bc;
+  --bfx-brand-tint: rgba(19, 87, 188, 0.08);
+  --bfx-impact-off: #d8e0e9;
+}
+
+.dark {
+  --bfx-app: #070c12;
+  --bfx-surface: #121b25;
+  --bfx-subtle: #16202b;
+  --bfx-raised: #0d141c;
+  --bfx-line: #1c2836;
+  --bfx-line-strong: #27384a;
+  --bfx-ink: #e8eff7;
+  --bfx-ink-2: #9baec2;
+  --bfx-ink-3: #64798f;
+  --bfx-pos: #4cd301;
+  --bfx-neg: #f04438;
+  --bfx-brand-soft: #2e7be8;
+  --bfx-brand-tint: rgba(46, 123, 232, 0.14);
+  --bfx-impact-off: #27384a;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: var(--bfx-app);
+  color: var(--bfx-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Numeric columns read better with lining, tabular figures. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Thin scrollbars for the scrollable data panes. */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bfx-line-strong) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--bfx-line-strong);
+  border-radius: 999px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+*:focus-visible {
+  outline: 2px solid #1357bc;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
