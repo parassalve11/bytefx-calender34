@@ -2,11 +2,11 @@ export const mainNav = [
   { label: 'Markets', href: '/markets' },
   { label: 'Calendar', href: '/' },
   { label: 'News', href: '/news' },
+  { label: 'Insights', href: '/insights' },
 ];
 
 export const calendarTabs = [
   { label: 'Calendar', href: '/' },
-  { label: 'Event detail', href: '/events/us-nonfarm-payrolls' },
   { label: 'Weekly overview', href: '/weekly' },
   { label: 'Alerts', href: '/alerts' },
 ];

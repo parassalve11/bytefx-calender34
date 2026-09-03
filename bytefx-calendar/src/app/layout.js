@@ -1,5 +1,7 @@
 import './globals.css';
 import Header from '@/components/layout/Header';
+import Toaster from '@/components/ui/Toaster';
+import { AppStateProvider } from '@/lib/store';
 
 export const metadata = {
   title: 'ByteFX — Economic Calendar',
@@ -23,6 +25,8 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://flagcdn.com" />
+        <link rel="preconnect" href="https://images.unsplash.com" />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
@@ -30,9 +34,12 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="bg-app text-ink">
-        <Header />
-        {/* clip (not hidden) keeps sticky positioning working inside */}
-        <main className="[overflow-x:clip]">{children}</main>
+        <AppStateProvider>
+          <Header />
+          {/* clip (not hidden) keeps sticky positioning working inside */}
+          <main className="[overflow-x:clip]">{children}</main>
+          <Toaster />
+        </AppStateProvider>
       </body>
     </html>
   );

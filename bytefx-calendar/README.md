@@ -3,8 +3,15 @@
 Frontend for the ByteFX Economic Calendar / Market Intelligence product.
 Next.js 14 (App Router), JavaScript + JSX, Tailwind CSS. No TypeScript.
 
-All data is static mock data for now; the component layer is written so that
-swapping in API calls later touches the files in `src/data/` only.
+All data is generated mock data. Rather than a fixed list of dated events, the
+app carries a catalog of recurring release *series* (`src/data/eventCatalog.js`)
+that `src/lib/calendarEngine.js` expands over whatever date range the UI asks
+for, generating actual / forecast / previous figures from a seeded PRNG. Every
+date in the calendar is therefore populated, and the same date always produces
+the same numbers — on the server, on the client, and on every revisit.
+
+Swapping in a real API later touches `src/lib/calendarEngine.js` and the files
+in `src/data/` only; the component layer consumes the event shape it returns.
 
 ## Running it
 
@@ -21,14 +28,15 @@ Node 18.17 or newer.
 
 | Route | Screen |
 | --- | --- |
-| `/` | Economic calendar — filters, events table, market intelligence rail |
-| `/events/[id]` | Event detail (e.g. `/events/us-nonfarm-payrolls`) |
-| `/weekly` | Weekly overview — heatmap, timeline, themes |
-| `/alerts` | Alerts & saved events |
-| `/markets` | Markets — instrument pricing |
+| `/` | Economic calendar — date picker, filters, events table, market rail |
+| `/events/[id]` | Event detail. `id` is `seriesId__YYYY-MM-DD` (a specific release) or a bare `seriesId`, which resolves to the next scheduled one |
+| `/weekly` | Weekly overview — heatmap, day breakdown, themes |
+| `/alerts` | Alerts & saved events, backed by the reminder store |
+| `/markets` | Markets — simulated live pricing |
 | `/news` | Market news |
+| `/insights` | Research and explainers, with Unsplash photography |
 
-Trade, Insights and Support are intentionally not part of this project.
+Trade and Support are intentionally not part of this project.
 
 The calendar section (`/`, `/events/*`, `/weekly`, `/alerts`) shows a secondary
 tab bar under the main header. The other routes don't.
@@ -38,29 +46,46 @@ tab bar under the main header. The other routes don't.
 ```
 src/
   app/
-    layout.js              root layout, header, theme bootstrap script
+    layout.js              root layout, header, state provider, toaster
     globals.css            Tailwind entry + light/dark colour tokens
     page.js                economic calendar
     events/[id]/page.js    event detail
-    weekly/page.js
-    alerts/page.js
-    markets/page.js
-    news/page.js
+    weekly/  alerts/  markets/  news/  insights/
   components/
     layout/                Header, CalendarTabs, ThemeToggle, PageHero
-    ui/                    Card, Controls (Segmented/Select/Checkbox/Button),
-                           Indicators (ImpactDots, ImpactBadge, CurrencyFlag,
-                           Delta, Value)
-    calendar/              FilterSidebar, EventsTable, SideRail
+    ui/                    Card, Controls (Segmented/Select/Checkbox/Toggle/
+                           Button/SearchInput/OptionPills), Indicators, Flag,
+                           Photo, Modal, Toaster, DatePicker, CountrySelect
+    calendar/              FilterSidebar, EventsTable, SideRail, ReminderDialog
     event/                 HistoricalTrend
+  lib/
+    calendarEngine.js      expands the catalog into dated events + figures
+    datetime.js            ISO-date helpers, formatting, timezone shifting
+    seed.js                seeded PRNG — deterministic figures
+    store.jsx              reminders, watchlist, preferences (localStorage)
+    priceFeed.js           simulated live prices for the markets tables
+    useNow.js              ticking clock, mounted flag, dismiss-on-outside
   data/
     navigation.js          main nav + calendar tabs
-    currencies.js          currency/country metadata, filter options
-    economicEvents.js      calendar events, impact levels, view options
-    marketIntelligence.js  affected markets, central banks, upcoming releases
-    eventDetails.js        per-event detail records
-    weekly.js  alerts.js  markets.js  news.js
+    countries.js           ~39 countries, regions, central banks, timezones
+    eventCatalog.js        ~620 recurring release series and their schedules
+    markets.js             instruments, sessions, sentiment
+    news.js  insights.js   editorial content
 ```
+
+### How the calendar data works
+
+`eventCatalog.js` holds hand-written entries for the headline releases (NFP,
+CPI, rate decisions and so on), each with a `schedule` rule — "first Friday
+monthly", "every six weeks from this anchor", "every Thursday". A second block
+of templates is then applied across every country to fill in the routine
+statistics each economy publishes, which is what takes a typical weekday from a
+handful of events to the twenty-plus a real calendar shows.
+
+`calendarEngine.js` turns those rules into dated events. Figures come from
+`seed.js`, keyed on the series id plus the release date, so they are stable and
+identical between server and client. Anything with a release time in the past is
+marked released and gets an actual; anything ahead of it shows only a forecast.
 
 ## Theming
 
@@ -107,12 +132,22 @@ need access to Google Fonts.
 
 ## Connecting the API later
 
-Each data module exports plain objects and arrays shaped the way the backend is
-expected to respond. To go live:
+The event shape returned by `buildEvent()` in `calendarEngine.js` is what every
+component consumes, so it is the contract to match. To go live:
 
-1. Replace the import in a page with a `fetch()` (server component) or a data
-   hook (client component).
-2. Keep the exported shapes, or update the components that destructure them.
-3. The pages that filter (`/`, `/alerts`, `/markets`, `/news`) do so in
-   `useMemo` over the imported arrays — move that to query parameters when the
-   API supports it.
+1. Replace `getEventsInRange(from, to, now)` with a `fetch()` against the real
+   calendar endpoint, returning the same event objects.
+2. `getEventByKey`, `getSeriesHistory`, `getRelatedEvents` and
+   `getAffectedMarkets` are the other four entry points; each maps to an
+   obvious endpoint.
+3. Filtering currently happens in `useMemo` over the generated list
+   (`filterEvents`) — move it to query parameters once the API supports it.
+4. `priceFeed.js` is a simulation; swap `useLivePrices` for a WebSocket
+   subscription that yields the same decorated quote shape.
+5. `store.jsx` persists reminders and the watchlist to localStorage. Point its
+   mutators at the user's account instead and the rest of the UI is unchanged.
+
+Two external hosts are used for imagery: `flagcdn.com` for country flags and
+`images.unsplash.com` for editorial photography. Flags are images rather than
+emoji because emoji flags do not render on Windows; `Photo.jsx` falls back to a
+gradient if a photo fails to load.

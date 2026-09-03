@@ -1,4 +1,5 @@
-import { currencyMeta } from '@/data/currencies';
+import { countryByCode } from '@/data/countries';
+import Flag from './Flag';
 
 const IMPACT_COLOR = {
   high: 'bg-impact-high',
@@ -18,6 +19,7 @@ export function ImpactDots({ level = 'low', className = '' }) {
       className={`inline-flex items-center gap-1 ${className}`}
       role="img"
       aria-label={IMPACT_LABEL[level]}
+      title={IMPACT_LABEL[level]}
     >
       {[0, 1, 2].map((i) => (
         <span
@@ -35,14 +37,16 @@ const BADGE_TONE = {
   low: 'border-impact-low/30 bg-impact-low/10 text-pos',
   neutral: 'border-line bg-subtle text-ink-2',
   brand: 'border-brand/25 bg-brand/10 text-brand-soft',
+  accent: 'border-accent/40 bg-accent/10 text-pos',
 };
 
-export function Badge({ tone = 'neutral', children, className = '' }) {
+export function Badge({ tone = 'neutral', children, className = '', ...props }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-2xs font-semibold ${
         BADGE_TONE[tone] ?? BADGE_TONE.neutral
       } ${className}`}
+      {...props}
     >
       {children}
     </span>
@@ -58,19 +62,18 @@ export function ImpactBadge({ level = 'low', withDots = true, className = '' }) 
   );
 }
 
-/** Flag + currency code. Flags are emoji so no image assets are needed. */
-export function CurrencyFlag({ code, showCode = true, size = 'base', className = '' }) {
-  const meta = currencyMeta[code] ?? { flag: '🏳️', country: code };
+/** Flag image + currency code, the standard identifier used in every table. */
+export function CurrencyFlag({ code, showCode = true, showCountry = false, size = 'sm', className = '' }) {
+  const country = countryByCode[code];
+  const label = country?.country ?? code;
   return (
     <span className={`relative inline-flex items-center gap-2 ${className}`}>
-      <span aria-hidden="true" className={`leading-none text-${size}`}>
-        {meta.flag}
-      </span>
+      <Flag code={code} size={size} />
       {showCode ? (
-        <span className="text-sm font-medium text-ink">{code}</span>
-      ) : (
-        <span className="sr-only">{meta.country}</span>
-      )}
+        <span className="text-sm font-medium text-ink">{country?.currencyOf ?? code}</span>
+      ) : null}
+      {showCountry ? <span className="truncate text-sm text-ink-2">{label}</span> : null}
+      {!showCode && !showCountry ? <span className="sr-only">{label}</span> : null}
     </span>
   );
 }
@@ -81,8 +84,32 @@ export function Delta({ value, className = '' }) {
     return <span className={`text-ink-3 ${className}`}>–</span>;
   }
   const negative = String(value).trim().startsWith('-');
+  return <span className={`${negative ? 'text-neg' : 'text-pos'} ${className}`}>{value}</span>;
+}
+
+/**
+ * An actual reading, coloured by whether it beat or missed the forecast rather
+ * than by its own sign — which is what a trader is actually looking for.
+ */
+export function ActualValue({ value, surprise, className = '' }) {
+  if (value === null || value === undefined || value === '') {
+    return <span className={`text-ink-3 ${className}`}>–</span>;
+  }
+  const tone =
+    surprise === 'beat' ? 'text-pos' : surprise === 'miss' ? 'text-neg' : 'text-ink';
   return (
-    <span className={`${negative ? 'text-neg' : 'text-pos'} ${className}`}>{value}</span>
+    <span
+      className={`${tone} ${className}`}
+      title={
+        surprise === 'beat'
+          ? 'Better than forecast'
+          : surprise === 'miss'
+            ? 'Worse than forecast'
+            : 'In line with forecast'
+      }
+    >
+      {value}
+    </span>
   );
 }
 
